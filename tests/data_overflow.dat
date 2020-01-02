@@ -1,0 +1,27 @@
+li $r1, 10
+li $r2, 20
+addi $r3, $r1, 20
+sub $r4, $r3, $r1
+beq \$r2, \$r4, label
+add $r2, $r4, $r3
+move $r5, $r2
+label :
+sw $r4, [10]
+li $r1, 10
+li $r2, 20
+addi $r3, $r1, 20
+sub $r4, $r3, $r1
+beq \$r2, \$r4, label
+add $r2, $r4, $r3
+move $r5, $r2
+label :
+sw $r4, [10]
+li $r1, 10
+li $r2, 20
+addi $r3, $r1, 20
+sub $r4, $r3, $r1
+beq \$r2, \$r4, label
+add $r2, $r4, $r3
+move $r5, $r2
+label :
+sw $r4, [10]
