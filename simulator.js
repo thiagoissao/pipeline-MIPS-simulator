@@ -16,7 +16,7 @@ const readFile = filePath => {
     return data.split('\n')
 
   } catch (err) {
-    console.error("Erro ao abrir o arquivo:");
+    console.error("Error 0: Erro ao abrir o arquivo:");
     console.log(err)
     return null
   }
@@ -25,22 +25,22 @@ const readFile = filePath => {
 const initialize = () => {
   instructionsMemory = readFile(FILEPATH)
   if (instructionsMemory.length > 25) {
-    console.error('Overflow na memória de instruções,' +
+    console.error('Erro Initialize: Overflow na memória de instruções,' +
       ' ultrapassou a quantidade de instruções permitida em: ' + (instructionsMemory.length - 25))
     process.exit(1)
   }
   $r1.value = $r2.value = $r3.value = $r4.value = $r5.value = $r6.value = $r7.value = $r8.value = $r9.value = $r10.value = 0
   PC.value = 0
   for (let i = 0; i < 20; i++) {
-    dataMemory[i] = { pos: i, value: 0 }
+    dataMemory[i] = { value: 0 }
   }
 }
 
 const printDataMemory = () => {
   console.log('--------------Memória de Dados--------------')
   console.log('Posição\t\tValor')
-  dataMemory.forEach(v => {
-    console.log(v.pos + '\t\t' + v.value)
+  dataMemory.forEach((v, index) => {
+    console.log(index + '\t\t' + v.value)
   })
   console.log('------------------------------------------')
 }
@@ -68,27 +68,48 @@ const printPC = () => {
 
 const printPipeline = () => { }
 
-const lw = (reg, adress) => { }
-const sw = (reg, address) => { }
+const isInteger = n => Number.isInteger(n)
+
+const lw = (reg, address) => {
+  (address < dataMemory.length) && (address >= 0) ?
+    reg.value = dataMemory[address].value : console.error('Error 1: Valor do endereço inválido')
+}
+
+const sw = (reg, address) => {
+  (address < dataMemory.length) && (address >= 0) && isInteger(reg.value) ?
+    dataMemory[address].value = reg.value : console.error('Error 2: Valores inseridos não foram validados com sucesso')
+}
 
 const li = (reg, immediate) => {
-  Number.isInteger(immediate) ?
-    reg.value = immediate : console.error('Valor imediato não é do tipo inteiro')
+  isInteger(immediate) ?
+    reg.value = immediate : console.error('Error 3: Valor imediato não é do tipo inteiro ' + immediate)
 }
 
 const move = (reg1, reg2) => {
-  Number.isInteger(reg2.value) ?
-    reg1.value = reg2.value : console.error('Valor do segundo parâmetro inválido')
+  isInteger(reg2.value) ?
+    reg1.value = reg2.value : console.error('Error 4: Valor do segundo parâmetro inválido: ' + reg2.value)
 }
 
-$r2 = 100
-move($r1, $r2)
-console.log($r1)
+const add = (reg1, reg2, reg3) => {
+  isInteger(reg2.value) && isInteger(reg3.value) ?
+    reg1.value = reg2.value + reg3.value : console.error('Error 5: Valor do segundo ou do terceiro parâmetro inválido')
+}
 
-const add = (reg1, reg2, reg3) => { reg1.value = reg2.value + reg2.value }
-const addi = (reg1, reg2, immediate) => { }
-const sub = (reg1, reg2, reg3) => { }
-const subi = (reg1, reg2, immediate) => { }
+const addi = (reg1, reg2, immediate) => {
+  isInteger(immediate) && (reg2.value != undefined) ?
+    reg1.value = reg2.value + immediate : console.log('Error 6: Valores inseridos inválidos')
+}
+
+const sub = (reg1, reg2, reg3) => {
+  isInteger(reg2.value) && isInteger(reg3.value) ?
+    reg1.value = reg2.value - reg3.value : console.log('Error 7: Valores de entrada inválidos')
+}
+
+const subi = (reg1, reg2, immediate) => {
+  isInteger(immediate) && (reg2.value != undefined) ?
+    reg1.value = reg2.value - immediate : console.log('Error 6: Valores inseridos inválidos')
+}
+
 const j = label => { }
 const beq = (reg1, reg2, label) => { }
 
