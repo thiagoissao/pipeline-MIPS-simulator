@@ -70,14 +70,45 @@ const printPipeline = () => { }
 
 const isInteger = n => Number.isInteger(n)
 
+const register = name => {
+  switch (name) {
+    case '$r1': return $r1
+    case '$r2': return $r2
+    case '$r3': return $r3
+    case '$r4': return $r4
+    case '$r5': return $r5
+    case '$r6': return $r6
+    case '$r7': return $r7
+    case '$r8': return $r8
+    case '$r9': return $r9
+    case '$r10': return $r10
+  }
+}
+
+//Usei para remover os colchetes
+const getOnlyNumbers = str => {
+  if (
+    str === undefined ||
+    str === null) return ''
+  return str.replace(/\D/g, '');
+}
+
 const lw = (reg, address) => {
-  (address < dataMemory.length) && (address >= 0) ?
-    reg.value = dataMemory[address].value : console.error('Error 1: Valor do endereço inválido')
+  const position = parseInt(getOnlyNumbers(address))
+  if ((position < dataMemory.length) && (position >= 0)) {
+    reg.value = dataMemory[position].value
+  } else {
+    console.error('Error 1: Valor do endereço inválido')
+  }
 }
 
 const sw = (reg, address) => {
-  (address < dataMemory.length) && (address >= 0) && isInteger(reg.value) ?
-    dataMemory[address].value = reg.value : console.error('Error 2: Valores inseridos não foram validados com sucesso')
+  const position = parseInt(getOnlyNumbers(address))
+  if ((position < dataMemory.length) && (position >= 0) && isInteger(reg.value)) {
+    dataMemory[position].value = reg.value
+  } else {
+    console.error('Error 2: Valores inseridos não foram validados com sucesso')
+  }
 }
 
 const li = (reg, immediate) => {
@@ -113,12 +144,60 @@ const subi = (reg1, reg2, immediate) => {
 const j = label => { }
 const beq = (reg1, reg2, label) => { }
 
-const fetchInstruction = () => { }
-const decode = () => { }
-const execute = () => { }
+const fetchInstruction = () => {
+  IR = instructionsMemory[PC.value]
+  PC.value += 1
+}
+
+const disruptInstruction = instruction => {
+  const opcode = instruction.split(' ', 1)
+  const operandsWithOpcode = instruction.split(',')
+  operandsWithOpcode[0] = operandsWithOpcode[0].split(' ')[1]
+  const operands = operandsWithOpcode.map(v => v.trim())
+  return [...opcode, ...operands]
+}
+
+const decode = () => disruptInstruction(IR)
+
+const execute = args => {
+  switch (args[0]) {
+    case 'lw': lw(register(args[1]), args[2])
+      break
+    case 'sw': sw(register(args[1]), args[2])
+      break
+    case 'li': li(register(args[1]), parseInt(args[2]))
+      break
+    case 'move': move(register(args[1]), register(args[2]))
+      break
+    case 'add': add(register(args[1]), register(args[2]), register(args[3]))
+      break
+    case 'addi': addi(register(args[1]), register(args[2]), parseInt(args[3]))
+      break
+    case 'sub': sub(register(args[1]), register(args[2]), register(args[3]))
+      break
+    case 'subi': subi(register(args[1]), register(args[2]), parseInt(args[3]))
+      break
+    case 'j': j(args[1])
+      break
+    case 'beq': beq(args[1], args[2], args[3])
+      break
+    default: console.error('Error 8: Operação indefinida, erro.')
+  }
+}
 const write = () => { }
 
+const runPipeline = () => {
+  while (PC.value < instructionsMemory.length) {
+    fetchInstruction()
+    const ARGS = decode()
+    console.log(ARGS)
+    execute(ARGS)
+  }
+}
+
 initialize()
-// printDataMemory()
-// printRegisters()
-// printPC()
+
+runPipeline()
+printDataMemory()
+printRegisters()
+printPC()
