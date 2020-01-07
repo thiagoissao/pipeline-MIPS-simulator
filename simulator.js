@@ -10,6 +10,9 @@ let dataMemory = []
 let $r1 = {}, $r2 = {}, $r3 = {}, $r4 = {}, $r5 = {}, $r6 = {}, $r7 = {}, $r8 = {}, $r9 = {}, $r10 = {}
 let PC = {}, IR = {}
 
+//Auxiliar
+let LABELS = []
+
 const readFile = filePath => {
   try {
     const data = fs.readFileSync(filePath).toString()
@@ -20,6 +23,20 @@ const readFile = filePath => {
     console.log(err)
     return null
   }
+}
+
+const disruptAllInstructions = () => {
+  let i = 0
+  while (i < instructionsMemory.length) {
+    const opcode = instructionsMemory[i].split(' ', 1)
+    const operandsWithOpcode = instructionsMemory[i].split(',')
+    operandsWithOpcode[0] = operandsWithOpcode[0].split(' ')[1]
+    const operands = operandsWithOpcode.map(v => v.trim())
+    const result = [...opcode, ...operands]
+    instructionsMemory[i] = result
+    i++
+  }
+  console.log(instructionsMemory)
 }
 
 const initialize = () => {
@@ -34,6 +51,7 @@ const initialize = () => {
   for (let i = 0; i < 20; i++) {
     dataMemory[i] = { value: 0 }
   }
+  disruptAllInstructions()
 }
 
 const printDataMemory = () => {
@@ -142,24 +160,26 @@ const subi = (reg1, reg2, immediate) => {
 }
 
 const j = label => { }
-const beq = (reg1, reg2, label) => { }
+
+const beq = (reg1, reg2, label) => {
+  if (reg1.value === reg2.value) {
+    let labelLine = LABELS.findIndex(v => v.label === label)
+    if (labelLine === -1) {
+      labelLine = instructionsMemory.findIndex(v => v[0] === label)
+      if (labelLine === -1) return console.error('Error to find label or undefined operation')
+    }
+    PC.value = labelLine
+  }
+}
 
 const fetchInstruction = () => {
   IR = instructionsMemory[PC.value]
   PC.value += 1
 }
 
-const disruptInstruction = instruction => {
-  const opcode = instruction.split(' ', 1)
-  const operandsWithOpcode = instruction.split(',')
-  operandsWithOpcode[0] = operandsWithOpcode[0].split(' ')[1]
-  const operands = operandsWithOpcode.map(v => v.trim())
-  return [...opcode, ...operands]
-}
+const decode = () => IR
 
-const decode = () => disruptInstruction(IR)
-
-const execute = args => {
+const execute = (args, line) => {
   switch (args[0]) {
     case 'lw': lw(register(args[1]), args[2])
       break
@@ -179,25 +199,30 @@ const execute = args => {
       break
     case 'j': j(args[1])
       break
-    case 'beq': beq(args[1], args[2], args[3])
+    case 'beq': beq(register(args[1]), register(args[2]), args[3])
       break
-    default: console.error('Error 8: Operação indefinida, erro.')
+    default: LABELS.push({
+      label: args[0],
+      line: line
+    })
   }
 }
 const write = () => { }
 
 const runPipeline = () => {
   while (PC.value < instructionsMemory.length) {
+    console.log(PC.value)
     fetchInstruction()
     const ARGS = decode()
-    console.log(ARGS)
-    execute(ARGS)
+    execute(ARGS, PC.value - 1)
   }
 }
 
 initialize()
 
 runPipeline()
-printDataMemory()
-printRegisters()
-printPC()
+// printDataMemory()
+// printRegisters()
+// printPC()
+
+// console.log(PC.value)
