@@ -6,6 +6,11 @@ const FILEPATH = './tests/data_ok.dat'
 let instructionsMemory
 let dataMemory = []
 
+let busca = "-"
+let decodificacao = "-"
+let execucao = "-"
+let escrita = "-"
+
 //Registradores
 let $r1 = {}, $r2 = {}, $r3 = {}, $r4 = {}, $r5 = {}, $r6 = {}, $r7 = {}, $r8 = {}, $r9 = {}, $r10 = {}
 let PC = {}, IR = {}
@@ -217,19 +222,31 @@ const ARGS = {
   execute: ARGS,
   write: args,
 }
+
 const runPipeline = () => {
-  while (PC.value < instructionsMemory.length) {
-    fetchInstruction()
-    const ARGS = decode()
-    const response = execute(ARGS, PC.value - 1)
-    console.log(response)
-  }
+  printDataMemory()
+  console.log()
+  printRegisters()
+  printPC()
+
+  do{
+    if(busca != "-"){
+      fetchInstruction()
+      escrita = execucao;
+      execucao = decodificacao
+      decodificacao = busca
+    }
+    if(decodificacao != "-") 
+      const ARGS = decode()
+    if(execucao != "-")
+      const response = execute(ARGS, PC.value - 1)
+  }while (busca != "-" && decodificacao != "-" && execucao != "-" && escrita != "-")
 }
 
 initialize()
 
-runPipeline()
-printDataMemory()
-printRegisters()
-printPC()
+// runPipeline()
+// printDataMemory()
+// printRegisters()
+// printPC()
 
