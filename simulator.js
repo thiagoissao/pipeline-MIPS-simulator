@@ -36,7 +36,6 @@ const disruptAllInstructions = () => {
     instructionsMemory[i] = result
     i++
   }
-  console.log(instructionsMemory)
 }
 
 const initialize = () => {
@@ -114,7 +113,11 @@ const getOnlyNumbers = str => {
 const lw = (reg, address) => {
   const position = parseInt(getOnlyNumbers(address))
   if ((position < dataMemory.length) && (position >= 0)) {
-    reg.value = dataMemory[position].value
+    // reg.value = dataMemory[position].value
+    return {
+      value: reg.value,
+      memoryPosition: position
+    }
   } else {
     console.error('Error 1: Valor do endereço inválido')
   }
@@ -123,50 +126,55 @@ const lw = (reg, address) => {
 const sw = (reg, address) => {
   const position = parseInt(getOnlyNumbers(address))
   if ((position < dataMemory.length) && (position >= 0) && isInteger(reg.value)) {
-    dataMemory[position].value = reg.value
+    // dataMemory[position].value = reg.value
+    return {
+      value: reg.value,
+      position: position
+    }
   } else {
     console.error('Error 2: Valores inseridos não foram validados com sucesso')
   }
 }
 
-const li = (reg, immediate) => {
+const li = immediate =>
   isInteger(immediate) ?
-    reg.value = immediate : console.error('Error 3: Valor imediato não é do tipo inteiro ' + immediate)
-}
+    immediate : console.error('Error 3: Valor imediato não é do tipo inteiro ' + immediate)
 
-const move = (reg1, reg2) => {
+const move = reg2 =>
   isInteger(reg2.value) ?
-    reg1.value = reg2.value : console.error('Error 4: Valor do segundo parâmetro inválido: ' + reg2.value)
-}
+    reg2.value : console.error('Error 4: Valor do segundo parâmetro inválido: ' + reg2.value)
 
-const add = (reg1, reg2, reg3) => {
+const add = (reg2, reg3) =>
   isInteger(reg2.value) && isInteger(reg3.value) ?
-    reg1.value = reg2.value + reg3.value : console.error('Error 5: Valor do segundo ou do terceiro parâmetro inválido')
-}
+    reg2.value + reg3.value : console.error('Error 5: Valor do segundo ou do terceiro parâmetro inválido')
 
-const addi = (reg1, reg2, immediate) => {
+const addi = (reg2, immediate) =>
   isInteger(immediate) && (reg2.value != undefined) ?
-    reg1.value = reg2.value + immediate : console.log('Error 6: Valores inseridos inválidos')
-}
+    reg2.value + immediate : console.log('Error 6: Valores inseridos inválidos')
 
-const sub = (reg1, reg2, reg3) => {
+const sub = (reg2, reg3) =>
   isInteger(reg2.value) && isInteger(reg3.value) ?
-    reg1.value = reg2.value - reg3.value : console.log('Error 7: Valores de entrada inválidos')
-}
+    reg2.value - reg3.value : console.log('Error 7: Valores de entrada inválidos')
 
-const subi = (reg1, reg2, immediate) => {
+const subi = (reg2, immediate) =>
   isInteger(immediate) && (reg2.value != undefined) ?
-    reg1.value = reg2.value - immediate : console.log('Error 6: Valores inseridos inválidos')
-}
+    reg2.value - immediate : console.log('Error 6: Valores inseridos inválidos')
 
-const j = label => { }
+
+const j = label => {
+  let labelLine = LABELS.findIndex(v => v.label === label)
+  if (labelLine === -1) {
+    labelLine = instructionsMemory.findIndex(v => v[0] === label)
+    if (labelLine === -1) return console.error('Error x: to find label or undefined operation')
+  }
+}
 
 const beq = (reg1, reg2, label) => {
   if (reg1.value === reg2.value) {
     let labelLine = LABELS.findIndex(v => v.label === label)
     if (labelLine === -1) {
       labelLine = instructionsMemory.findIndex(v => v[0] === label)
-      if (labelLine === -1) return console.error('Error to find label or undefined operation')
+      if (labelLine === -1) return console.error('Error y: to find label or undefined operation')
     }
     PC.value = labelLine
   }
@@ -181,48 +189,47 @@ const decode = () => IR
 
 const execute = (args, line) => {
   switch (args[0]) {
-    case 'lw': lw(register(args[1]), args[2])
-      break
-    case 'sw': sw(register(args[1]), args[2])
-      break
-    case 'li': li(register(args[1]), parseInt(args[2]))
-      break
-    case 'move': move(register(args[1]), register(args[2]))
-      break
-    case 'add': add(register(args[1]), register(args[2]), register(args[3]))
-      break
-    case 'addi': addi(register(args[1]), register(args[2]), parseInt(args[3]))
-      break
-    case 'sub': sub(register(args[1]), register(args[2]), register(args[3]))
-      break
-    case 'subi': subi(register(args[1]), register(args[2]), parseInt(args[3]))
-      break
-    case 'j': j(args[1])
-      break
-    case 'beq': beq(register(args[1]), register(args[2]), args[3])
-      break
+    case 'lw': return lw(register(args[1]), args[2])
+    case 'sw': return sw(register(args[1]), args[2])
+    case 'li': return li(parseInt(args[2]))
+    case 'move': return move(register(args[2]))
+    case 'add': return add(register(args[2]), register(args[3]))
+    case 'addi': return addi(register(args[2]), parseInt(args[3]))
+    case 'sub': return sub(register(args[2]), register(args[3]))
+    case 'subi': return subi(register(args[2]), parseInt(args[3]))
+    case 'j': return j(args[1])
+    case 'beq': return beq(register(args[1]), register(args[2]), args[3])
     default: LABELS.push({
-      label: args[0],
+      label: args[0] + ':',
       line: line
     })
   }
 }
 const write = () => { }
 
+
+const ARGS = {
+  fetch: {
+    ...ARGS,
+    clockRestante: 1
+  },
+  decode: ARGS,
+  execute: ARGS,
+  write: args,
+}
 const runPipeline = () => {
   while (PC.value < instructionsMemory.length) {
-    console.log(PC.value)
     fetchInstruction()
     const ARGS = decode()
-    execute(ARGS, PC.value - 1)
+    const response = execute(ARGS, PC.value - 1)
+    console.log(response)
   }
 }
 
 initialize()
 
 runPipeline()
-// printDataMemory()
-// printRegisters()
-// printPC()
+printDataMemory()
+printRegisters()
+printPC()
 
-// console.log(PC.value)
