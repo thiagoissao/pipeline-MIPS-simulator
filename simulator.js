@@ -10,6 +10,7 @@ let busca = "-"
 let decodificacao = "-"
 let execucao = "-"
 let escrita = "-"
+let clock = 0
 
 //Registradores
 let $r1 = {}, $r2 = {}, $r3 = {}, $r4 = {}, $r5 = {}, $r6 = {}, $r7 = {}, $r8 = {}, $r9 = {}, $r10 = {}
@@ -17,6 +18,8 @@ let PC = {}, IR = {}
 
 //Auxiliar
 let LABELS = []
+let ARGS = {}
+let response
 
 const readFile = filePath => {
   try {
@@ -88,7 +91,11 @@ const printPC = () => {
   console.log()
 }
 
-const printPipeline = () => { }
+const printPipeline = () => {
+  console.log("-----------------Pipeline-----------------")
+  console.log("clock: "+clock.toString())
+  console.log("Busca instrucao: " + busca + "\nDecodificacao: " + decodificacao + "\nExecucao: " + execucao + "\nEscrita resultado: " + escrita)
+ }
 
 const isInteger = n => Number.isInteger(n)
 
@@ -183,12 +190,16 @@ const beq = (reg1, reg2, label) => {
       if (labelLine === -1) return console.error('Error y: to find label or undefined operation')
     }
     PC.value = labelLine
+    write = "-"
+    execucao = "-"
+    decodificacao = "-"
   }
 }
 
 const fetchInstruction = () => {
   IR = instructionsMemory[PC.value]
   PC.value += 1
+  return IR
 }
 
 const decode = () => IR
@@ -225,26 +236,41 @@ const runPipeline = () => {
   console.log()
   printRegisters()
   printPC()
+  printPipeline()
+  
+  let dependencia = 0
 
+  busca = fetchInstruction()
+  
   do{
     if(busca != "-"){
-      fetchInstruction()
       escrita = execucao;
-      execucao = decodificacao
+      if(dependencia != 1)
+        execucao = decodificacao
+      else
+        execucao = "-"
       decodificacao = busca
     }
-    if(decodificacao != "-") 
-      const ARGS = decode()
-    if(execucao != "-")
-      const response = execute(ARGS, PC.value - 1)
-    if (write !="-" && ARGS[0] != 'beq')
+    if(decodificacao != "-")
+      console.log("DECODIFICACAO AQUI:" + decodificacao[1])
+      ARGS = decode()
+    if(execucao != "-"){
+      if(execucao[1] == decodificacao [2] || execucao[1] == decodificacao[3] || execucao[2] == decodificacao [1] || execucao[3] == decodificacao[1])
+        dependencia = 1
+      response = execute(ARGS, PC.value - 1)
+      
+    }
+    if (write != "-")
       write(ARGS[1], response, ARGS[0])
+    if(dependencia != 1)
+      busca = fetchInstruction()
+    printPipeline()
   }while (busca != "-" && decodificacao != "-" && execucao != "-" && escrita != "-")
 }
 
 initialize()
 
-// runPipeline()
+runPipeline()
 // printDataMemory()
 // printRegisters()
 // printPC()
