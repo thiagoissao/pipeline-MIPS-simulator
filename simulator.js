@@ -241,7 +241,12 @@ const runPipeline = () => {
   let dependencia = 0
 
   busca = fetchInstruction()
-  
+  // printDataMemory()
+  // console.log()
+  // printRegisters()
+  // printPC()
+  printPipeline()
+
   do{
     if(busca != "-"){
       escrita = execucao;
@@ -251,9 +256,9 @@ const runPipeline = () => {
         execucao = "-"
       decodificacao = busca
     }
-    if(decodificacao != "-")
-      console.log("DECODIFICACAO AQUI:" + decodificacao[1])
+    if(decodificacao != "-"){
       ARGS = decode()
+    }
     if(execucao != "-"){
       if(execucao[1] == decodificacao [2] || execucao[1] == decodificacao[3] || execucao[2] == decodificacao [1] || execucao[3] == decodificacao[1])
         dependencia = 1
