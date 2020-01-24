@@ -99,6 +99,7 @@ const register = name => {
     case '$r8': return $r8
     case '$r9': return $r9
     case '$r10': return $r10
+    default: return false
   }
 }
 
@@ -205,24 +206,22 @@ const execute = (args, line) => {
     })
   }
 }
-const write = () => { }
 
-
-const ARGS = {
-  fetch: {
-    ...ARGS,
-    clockRestante: 1
-  },
-  decode: ARGS,
-  execute: ARGS,
-  write: args,
+const write = (destination, source, opcode) => {
+  if (opcode === 'sw') {
+    dataMemory[source.position].value = source.value
+    return
+  }
+  register(destination) ? register(destination).value = source : null
 }
+
 const runPipeline = () => {
   while (PC.value < instructionsMemory.length) {
     fetchInstruction()
     const ARGS = decode()
     const response = execute(ARGS, PC.value - 1)
-    console.log(response)
+    if (ARGS[0] != 'beq')
+      write(ARGS[1], response, ARGS[0])
   }
 }
 
