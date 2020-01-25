@@ -93,9 +93,9 @@ const printPC = () => {
 
 const printPipeline = () => {
   console.log("-----------------Pipeline-----------------")
-  console.log("clock: "+clock.toString())
+  console.log("clock: " + clock.toString())
   console.log("Busca instrucao: " + busca + "\nDecodificacao: " + decodificacao + "\nExecucao: " + execucao + "\nEscrita resultado: " + escrita)
- }
+}
 
 const isInteger = n => Number.isInteger(n)
 
@@ -237,7 +237,8 @@ const runPipeline = () => {
   printRegisters()
   printPC()
   printPipeline()
-  
+  clock++
+
   let dependencia = 0
 
   busca = fetchInstruction()
@@ -246,31 +247,48 @@ const runPipeline = () => {
   // printRegisters()
   // printPC()
   printPipeline()
-
-  do{
-    if(busca != "-"){
+  clock++
+  let contador = 0;
+  do {
+    if (busca != "-") {
       escrita = execucao;
-      if(dependencia != 1)
+      if (dependencia != 1)
         execucao = decodificacao
-      else
+      else {
         execucao = "-"
+        dependencia = 0
+      }
       decodificacao = busca
     }
-    if(decodificacao != "-"){
+    if (decodificacao.length < 3 && decodificacao !== '-')
+      decodificacao.push(null)
+    if (execucao.length < 3 && execucao !== '-')
+      execucao.push(null)
+    if (decodificacao != "-") {
       ARGS = decode()
     }
-    if(execucao != "-"){
-      if(execucao[1] == decodificacao [2] || execucao[1] == decodificacao[3] || execucao[2] == decodificacao [1] || execucao[3] == decodificacao[1])
+    if (execucao != "-") {
+      if (
+        execucao[1] == decodificacao[2] ||
+        execucao[1] == decodificacao[3] ||
+        execucao[2] == decodificacao[1] ||
+        execucao[3] == decodificacao[1]
+      ) {
         dependencia = 1
+        clock++
+        printPipeline()
+      }
       response = execute(ARGS, PC.value - 1)
-      
+
     }
     if (write != "-")
       write(ARGS[1], response, ARGS[0])
-    if(dependencia != 1)
+    if (dependencia != 1) {
       busca = fetchInstruction()
+    }
     printPipeline()
-  }while (busca != "-" && decodificacao != "-" && execucao != "-" && escrita != "-")
+    contador++
+  } while (contador < 7) //while ((busca != "-" || decodificacao != "-" || execucao != "-" || escrita != "-"))
 }
 
 initialize()
