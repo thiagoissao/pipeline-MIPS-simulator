@@ -125,7 +125,6 @@ const getOnlyNumbers = str => {
 const lw = (reg, address) => {
   const position = parseInt(getOnlyNumbers(address))
   if ((position < dataMemory.length) && (position >= 0)) {
-    // reg.value = dataMemory[position].value
     return {
       value: reg.value,
       memoryPosition: position
@@ -138,11 +137,7 @@ const lw = (reg, address) => {
 const sw = (reg, address) => {
   const position = parseInt(getOnlyNumbers(address))
   if ((position < dataMemory.length) && (position >= 0) && isInteger(reg.value)) {
-    // dataMemory[position].value = reg.value
-    return {
-      value: reg.value,
-      position: position
-    }
+    return position
   } else {
     console.error('Error 2: Valores inseridos não foram validados com sucesso')
   }
@@ -178,6 +173,12 @@ const j = label => {
   if (labelLine === -1) {
     labelLine = instructionsMemory.findIndex(v => v[0] === label)
     if (labelLine === -1) return console.error('Error x: to find label or undefined operation')
+    if (instructionsMemory[labelLine][1] === ':') labelLine += 1
+    PC.value = labelLine
+    escrita = "-"
+    busca = fetchInstruction()
+    execucao = "-"
+    decodificacao = "-"
   }
 }
 
@@ -187,10 +188,13 @@ const beq = (reg1, reg2, label) => {
     if (labelLine === -1) {
       labelLine = instructionsMemory.findIndex(v => v[0] === label)
       if (labelLine === -1) return console.error('Error y: to find label or undefined operation')
+      if (instructionsMemory[labelLine][1] === ':') labelLine += 1
     }
-    console.log("OLHA O LABEL LINE AQUI PORRA:" + labelLine)
+    clock++
+    printarTodasInformacoes()
     PC.value = labelLine
     escrita = "-"
+    busca = fetchInstruction()
     execucao = "-"
     decodificacao = "-"
   }
@@ -224,9 +228,9 @@ const execute = (args, line) => {
 }
 
 const write = (destination, source, opcode) => {
-  if (opcode === 'sw') {
-    dataMemory[source.position].value = source.value
-    return
+  if (opcode == 'sw') {
+    dataMemory[source].value = register(destination).value
+    return dataMemory
   }
   register(destination) ? register(destination).value = source : null
 }
@@ -247,21 +251,22 @@ const runPipeline = () => {
   let guardarRespostaDaExecucao;
   busca = fetchInstruction()
   printarTodasInformacoes()
-  let contador = 0;
   do {
     guardarRespostaDaExecucao = response
-    if (busca != "-") {
-      escrita = execucao;
-      if (dependencia != 1) {
-        execucao = decodificacao
-        decodificacao = busca
+    escrita = execucao;
+    if (dependencia != 1) {
+      execucao = decodificacao
+      decodificacao = busca
+      if (busca != "-")
         busca = fetchInstruction()
-        console.log(busca)
+      if (busca === undefined) {
+        PC.value = "-"
+        busca = '-'
       }
-      else {
-        execucao = "-"
-        dependencia = 0
-      }
+    }
+    else {
+      execucao = "-"
+      dependencia = 0
     }
     if (decodificacao.length < 3 && decodificacao !== '-')
       decodificacao.push(null)
@@ -271,7 +276,6 @@ const runPipeline = () => {
       ARGS = decode()
     }
     if (execucao != "-") {
-      // console.log("OLHA O LACO AQUI : " + laco + "\n" + "OLHA A EXECUCAO AQUI :" + execucao)
       if (
         execucao[1] == decodificacao[2] ||
         execucao[1] == decodificacao[3] ||
@@ -280,29 +284,22 @@ const runPipeline = () => {
       ) {
         dependencia = 1
       }
-      if (execucao[0] === 'beq') {
-        clock++
-        printarTodasInformacoes()
-      }
       response = execute(execucao, PC.value - 1)
-      if (execucao[0] === 'lw' || execucao[0] === 'sw' || execucao[0] === 'add' || execucao[0] === 'sub') {
+      if ((execucao[0] === 'lw' || execucao[0] === 'sw' || execucao[0] === 'add' || execucao[0] === 'sub') && (execucao != 'beq' && execucao != 'j')) {
         clock++
+        escrita = '-'
         printarTodasInformacoes()
       }
     }
     clock++
     printarTodasInformacoes()
-    console.log(execucao)
-    if (escrita != "-")
+    if (guardarRespostaDaExecucao == undefined && response != undefined)
+      guardarRespostaDaExecucao = response
+    if (escrita != "-" && escrita[0] != 'beq' && escrita != 'j')
       write(escrita[1], guardarRespostaDaExecucao, escrita[0])
-    contador++
   } while ((busca != "-" || decodificacao != "-" || execucao != "-" || escrita != "-"))
 }
 
 initialize()
 
 runPipeline()
-// printDataMemory()
-// printRegisters()
-// printPC()
-
