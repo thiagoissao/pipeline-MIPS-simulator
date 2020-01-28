@@ -93,7 +93,6 @@ const printPC = () => {
 
 const printPipeline = () => {
   console.log("-----------------Pipeline-----------------")
-  console.log("clock: " + clock.toString())
   console.log("Busca instrucao: " + busca + "\nDecodificacao: " + decodificacao + "\nExecucao: " + execucao + "\nEscrita resultado: " + escrita)
 }
 
@@ -189,8 +188,9 @@ const beq = (reg1, reg2, label) => {
       labelLine = instructionsMemory.findIndex(v => v[0] === label)
       if (labelLine === -1) return console.error('Error y: to find label or undefined operation')
     }
+    console.log("OLHA O LABEL LINE AQUI PORRA:" +labelLine)
     PC.value = labelLine
-    write = "-"
+    escrita = "-"
     execucao = "-"
     decodificacao = "-"
   }
@@ -231,34 +231,36 @@ const write = (destination, source, opcode) => {
   register(destination) ? register(destination).value = source : null
 }
 
-const runPipeline = () => {
+const printarTodasInformacoes = () => {
+  console.log("\n\tCiclo de clock: " + clock.toString())
   printDataMemory()
   console.log()
   printRegisters()
   printPC()
   printPipeline()
-  clock++
+}
 
+const runPipeline = () => {
+  printarTodasInformacoes()
+  clock++
   let dependencia = 0
-
+  let guardarRespostaDaExecucao;
   busca = fetchInstruction()
-  // printDataMemory()
-  // console.log()
-  // printRegisters()
-  // printPC()
-  printPipeline()
-  clock++
+  printarTodasInformacoes()
   let contador = 0;
   do {
+    guardarRespostaDaExecucao = response
     if (busca != "-") {
       escrita = execucao;
-      if (dependencia != 1)
+      if (dependencia != 1){
         execucao = decodificacao
+        decodificacao = busca
+        busca = fetchInstruction()
+      }
       else {
         execucao = "-"
         dependencia = 0
       }
-      decodificacao = busca
     }
     if (decodificacao.length < 3 && decodificacao !== '-')
       decodificacao.push(null)
@@ -268,6 +270,7 @@ const runPipeline = () => {
       ARGS = decode()
     }
     if (execucao != "-") {
+      // console.log("OLHA O LACO AQUI : " + laco + "\n" + "OLHA A EXECUCAO AQUI :" + execucao)
       if (
         execucao[1] == decodificacao[2] ||
         execucao[1] == decodificacao[3] ||
@@ -275,20 +278,24 @@ const runPipeline = () => {
         execucao[3] == decodificacao[1]
       ) {
         dependencia = 1
-        clock++
-        printPipeline()
       }
-      response = execute(ARGS, PC.value - 1)
-
+      if(execucao[0] === 'beq'){
+        clock++ 
+        printarTodasInformacoes()
+      }
+      response = execute(execucao, PC.value - 1)
+      if(execucao[0] === 'lw' || execucao[0] === 'sw' || execucao[0] === 'add' || execucao[0] === 'sub'){
+        clock++
+        printarTodasInformacoes()
+      }
     }
-    if (write != "-")
-      write(ARGS[1], response, ARGS[0])
-    if (dependencia != 1) {
-      busca = fetchInstruction()
-    }
-    printPipeline()
+    clock++
+    printarTodasInformacoes()
+    console.log(execucao)
+    if (escrita != "-")
+      write(escrita[1], guardarRespostaDaExecucao, escrita[0])
     contador++
-  } while (contador < 7) //while ((busca != "-" || decodificacao != "-" || execucao != "-" || escrita != "-"))
+  } while (contador < 9) //while ((busca != "-" || decodificacao != "-" || execucao != "-" || escrita != "-"))
 }
 
 initialize()
