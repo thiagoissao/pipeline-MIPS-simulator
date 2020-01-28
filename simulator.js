@@ -188,7 +188,7 @@ const beq = (reg1, reg2, label) => {
       labelLine = instructionsMemory.findIndex(v => v[0] === label)
       if (labelLine === -1) return console.error('Error y: to find label or undefined operation')
     }
-    console.log("OLHA O LABEL LINE AQUI PORRA:" +labelLine)
+    console.log("OLHA O LABEL LINE AQUI PORRA:" + labelLine)
     PC.value = labelLine
     escrita = "-"
     execucao = "-"
@@ -252,10 +252,11 @@ const runPipeline = () => {
     guardarRespostaDaExecucao = response
     if (busca != "-") {
       escrita = execucao;
-      if (dependencia != 1){
+      if (dependencia != 1) {
         execucao = decodificacao
         decodificacao = busca
         busca = fetchInstruction()
+        console.log(busca)
       }
       else {
         execucao = "-"
@@ -279,12 +280,12 @@ const runPipeline = () => {
       ) {
         dependencia = 1
       }
-      if(execucao[0] === 'beq'){
-        clock++ 
+      if (execucao[0] === 'beq') {
+        clock++
         printarTodasInformacoes()
       }
       response = execute(execucao, PC.value - 1)
-      if(execucao[0] === 'lw' || execucao[0] === 'sw' || execucao[0] === 'add' || execucao[0] === 'sub'){
+      if (execucao[0] === 'lw' || execucao[0] === 'sw' || execucao[0] === 'add' || execucao[0] === 'sub') {
         clock++
         printarTodasInformacoes()
       }
@@ -295,7 +296,7 @@ const runPipeline = () => {
     if (escrita != "-")
       write(escrita[1], guardarRespostaDaExecucao, escrita[0])
     contador++
-  } while (contador < 9) //while ((busca != "-" || decodificacao != "-" || execucao != "-" || escrita != "-"))
+  } while ((busca != "-" || decodificacao != "-" || execucao != "-" || escrita != "-"))
 }
 
 initialize()
